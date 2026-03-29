@@ -109,6 +109,179 @@ python tools/convert_visdrone_to_coco.py \
 
 Repeat for validation annotations and then use `configs/experiments/full_visdrone.yaml`.
 
+### PennFudanPed Tiny Public Fallback
+
+If you do not want to download or construct AI-TOD yet, this repo now supports a very small public dataset based on **PennFudanPed**.
+
+What this gives you:
+
+- automatic download,
+- automatic train/val split,
+- automatic COCO-format conversion,
+- tiny enough for CPU-laptop demos,
+- a clean way to prove the project runs end to end.
+
+This is **not** an aerial tiny-object benchmark, so use it for functional validation and demo outputs, not for claiming aerial tiny-object gains.
+
+Download and prepare it automatically:
+
+```powershell
+.\scripts\download_pennfudan.ps1
+```
+
+This stores the dataset under:
+
+```text
+data\datasets\PennFudanCOCO\
+  annotations\
+    train.json
+    val.json
+  train\images\
+  val\images\
+  raw\
+```
+
+The downloader uses the public PennFudanPed zip from the official Penn dataset page:
+
+- `https://www.cis.upenn.edu/~jshi/ped_html/PennFudanPed.zip`
+
+You can also run the downloader directly:
+
+```powershell
+python tools\download_pennfudan.py --output-root data\datasets\PennFudanCOCO
+```
+
+Train the full demo model on PennFudan:
+
+```powershell
+.\scripts\train_pennfudan_cpu_demo.ps1
+```
+
+Train the baseline demo model on PennFudan:
+
+```powershell
+.\scripts\train_baseline_pennfudan_cpu_demo.ps1
+```
+
+Configs:
+
+- `configs/experiments/cpu_demo_pennfudan.yaml`
+- `configs/experiments/baseline_cpu_demo_pennfudan.yaml`
+
+### TinyPennFudan Synthetic Tiny-Object Fallback
+
+PennFudan remains available exactly as before. In addition, the repo now includes a second public fallback called **TinyPennFudan**, generated automatically from PennFudan.
+
+What TinyPennFudan does:
+
+- keeps PennFudan as the public source dataset,
+- builds larger synthetic canvases,
+- pastes strongly downscaled PennFudan mini-scenes onto those canvases,
+- turns the pedestrians into much smaller objects,
+- gives you a more tiny-object-like fallback than plain PennFudan.
+
+Important:
+
+- this is still a synthetic fallback, not a real aerial dataset,
+- it is meant to stress tiny-object behavior more than standard PennFudan,
+- use it as a stronger laptop demo, not as a substitute for AI-TOD benchmark claims.
+
+Build the TinyPennFudan dataset:
+
+```powershell
+.\scripts\build_tinypennfudan.ps1
+```
+
+This creates:
+
+```text
+data\datasets\TinyPennFudanCOCO\
+  annotations\
+    train.json
+    val.json
+  train\images\
+  val\images\
+```
+
+Train the baseline tiny-object fallback model:
+
+```powershell
+.\scripts\train_baseline_tinypennfudan_cpu_demo.ps1
+```
+
+Train the full proposed tiny-object fallback model:
+
+```powershell
+.\scripts\train_tinypennfudan_cpu_demo.ps1
+```
+
+Configs:
+
+- `configs/experiments/baseline_cpu_demo_tinypennfudan.yaml`
+- `configs/experiments/cpu_demo_tinypennfudan.yaml`
+
+## Small AI-TOD Subset for Laptop Use
+
+If you only have a CPU laptop with limited disk and RAM, the most realistic path is to work with a **small local subset** of AI-TOD.
+
+Important note:
+
+- As of March 29, 2026, the official AI-TOD release does **not** provide a clean official "mini subset download" package.
+- The official instructions still say you need the xView training set plus `AI-TOD_wo_xview` and the synthesis toolkit to construct AI-TOD.
+
+Practical options:
+
+1. ask a teammate or lab machine for an already-generated AI-TOD copy, then extract a small subset locally,
+2. build the full AI-TOD once on another machine and copy only a small subset to your laptop,
+3. if you already have full AI-TOD on disk, use the included subset tool below.
+
+### Create a small subset from a full AI-TOD copy
+
+This script copies only a small number of train/val images and writes matching COCO annotations:
+
+- `tools/make_coco_subset.py`
+
+Example:
+
+```powershell
+python tools\make_coco_subset.py --source-root data\datasets\AI-TOD --output-root data\datasets\AI-TOD-mini --train-count 200 --val-count 50
+```
+
+This creates:
+
+```text
+data\datasets\AI-TOD-mini\
+  annotations\
+    train.json
+    val.json
+  train\images\
+  val\images\
+```
+
+Train on the subset without changing files by overriding the dataset root:
+
+```powershell
+python train.py --config configs/experiments/cpu_demo_aitod.yaml --set dataset.root=data/datasets/AI-TOD-mini
+```
+
+### Very small subset example
+
+For a really lightweight laptop demo:
+
+```powershell
+python tools\make_coco_subset.py --source-root data\datasets\AI-TOD --output-root data\datasets\AI-TOD-tiny --train-count 50 --val-count 20
+python train.py --config configs/experiments/cpu_demo_aitod.yaml --set dataset.root=data/datasets/AI-TOD-tiny dataset.train_max_samples=50 dataset.val_max_samples=20 training.epochs=1
+```
+
+### Recommended presentation path on a laptop
+
+If your goal is to show that the project works and compare variants, use:
+
+1. `AI-TOD-mini` with 50 to 200 training images,
+2. `baseline_cpu_demo_aitod.yaml`,
+3. `cpu_demo_aitod.yaml`,
+4. the generated logs, metrics, prediction images, and curves.
+
 ## Copy-Paste Only Checklist (Windows PowerShell)
 
 Use the following commands in order from a fresh PowerShell window.
@@ -215,6 +388,136 @@ Open:
 ```powershell
 python train.py --config configs/experiments/full_aitod.yaml --resume outputs/aitod_full/last.pth
 ```
+
+## Easiest No-AI-TOD Demo Path
+
+If you just want this repository to run on a normal laptop, use PennFudan first:
+
+```powershell
+cd c:\Users\curvy\Desktop\DL-Project
+.\.venv\Scripts\Activate.ps1
+.\scripts\download_pennfudan.ps1
+.\scripts\train_baseline_pennfudan_cpu_demo.ps1
+.\scripts\train_pennfudan_cpu_demo.ps1
+python ablate.py --run-dirs outputs/pennfudan_baseline_cpu_demo outputs/pennfudan_cpu_demo --output reports/pennfudan_demo_summary.md --csv reports/pennfudan_demo_summary.csv
+```
+
+Then open:
+
+- `outputs\pennfudan_baseline_cpu_demo\eval\metrics.json`
+- `outputs\pennfudan_cpu_demo\eval\metrics.json`
+- `outputs\pennfudan_baseline_cpu_demo\eval\predictions\`
+- `outputs\pennfudan_cpu_demo\eval\predictions\`
+- `reports\pennfudan_demo_summary.md`
+
+## Tiny-Object-Like Laptop Demo Path
+
+If you want a fallback that is more aligned with tiny-object behavior than plain PennFudan, use TinyPennFudan:
+
+```powershell
+cd c:\Users\curvy\Desktop\DL-Project
+.\.venv\Scripts\Activate.ps1
+.\scripts\build_tinypennfudan.ps1
+.\scripts\train_baseline_tinypennfudan_cpu_demo.ps1
+.\scripts\train_tinypennfudan_cpu_demo.ps1
+python ablate.py --run-dirs outputs/tinypennfudan_baseline_cpu_demo outputs/tinypennfudan_cpu_demo --output reports/tinypennfudan_demo_summary.md --csv reports/tinypennfudan_demo_summary.csv
+```
+
+Then open:
+
+- `outputs\tinypennfudan_baseline_cpu_demo\eval\metrics.json`
+- `outputs\tinypennfudan_cpu_demo\eval\metrics.json`
+- `outputs\tinypennfudan_baseline_cpu_demo\eval\predictions\`
+- `outputs\tinypennfudan_cpu_demo\eval\predictions\`
+- `reports\tinypennfudan_demo_summary.md`
+
+## Low-Resource Laptop Mode
+
+If you have a CPU-only laptop with around 16 GB RAM, do **not** try to run the full default AI-TOD setup first. Use the included low-resource demo config instead.
+
+What this mode changes:
+
+- uses `cpu` only,
+- uses `workers: 0`,
+- reduces image scale to `384`,
+- switches to `resnet18`,
+- reduces transformer size and number of queries,
+- trains on a small subset of AI-TOD by default,
+- still produces logs, metrics, prediction images, curves, and fusion-weight plots.
+
+Included config:
+
+- `configs/experiments/cpu_demo_aitod.yaml`
+- `configs/experiments/baseline_cpu_demo_aitod.yaml`
+
+Included script:
+
+- `scripts/train_cpu_demo.ps1`
+- `scripts/train_baseline_cpu_demo.ps1`
+
+Run it:
+
+```powershell
+.\scripts\train_cpu_demo.ps1
+```
+
+Or directly:
+
+```powershell
+python train.py --config configs/experiments/cpu_demo_aitod.yaml
+```
+
+Baseline CPU demo:
+
+```powershell
+.\scripts\train_baseline_cpu_demo.ps1
+```
+
+Or directly:
+
+```powershell
+python train.py --config configs/experiments/baseline_cpu_demo_aitod.yaml
+```
+
+Default subset in low-resource mode:
+
+- `train_max_samples: 200`
+- `val_max_samples: 50`
+- `epochs: 2`
+
+Outputs will be written to:
+
+- `outputs\aitod_cpu_demo\`
+
+Open these after the run:
+
+- `outputs\aitod_cpu_demo\train.log`
+- `outputs\aitod_cpu_demo\history.jsonl`
+- `outputs\aitod_cpu_demo\eval\metrics.json`
+- `outputs\aitod_cpu_demo\eval\predictions\`
+- `outputs\aitod_cpu_demo\training_curves.png`
+- `outputs\aitod_cpu_demo\fusion_weights.png`
+
+If it is still too slow, reduce the subset even more:
+
+```powershell
+python train.py --config configs/experiments/cpu_demo_aitod.yaml --set dataset.train_max_samples=50 dataset.val_max_samples=20 training.epochs=1
+```
+
+If you want a slightly stronger run and your laptop can handle it:
+
+```powershell
+python train.py --config configs/experiments/cpu_demo_aitod.yaml --set dataset.train_max_samples=500 dataset.val_max_samples=100 training.epochs=3
+```
+
+This mode is best for:
+
+- proving the code runs end to end,
+- generating screenshots and example outputs,
+- showing ablation wiring and experiment structure,
+- demonstrating the proposed method against a baseline on a manageable subset.
+
+This mode is **not** intended to produce paper-quality final benchmark numbers on AI-TOD.
 
 ## Training
 

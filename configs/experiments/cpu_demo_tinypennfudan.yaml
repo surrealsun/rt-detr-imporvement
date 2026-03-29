@@ -1,0 +1,43 @@
+base_configs:
+  - ../default.yaml
+  - ../datasets/tinypennfudan.yaml
+
+project:
+  output_dir: outputs/tinypennfudan_cpu_demo
+
+runtime:
+  device: cpu
+  workers: 0
+  amp: false
+  print_freq: 5
+  pin_memory: false
+
+dataset:
+  train_scales: [512]
+  eval_scale: 512
+  max_size: 640
+  min_box_size: 2.0
+
+model:
+  backbone:
+    name: resnet18
+    pretrained: false
+  hidden_dim: 128
+  num_queries: 120
+  query_select_topk: 120
+  nheads: 4
+  encoder_layers: 1
+  decoder_layers: 2
+  dim_feedforward: 512
+  use_detail_branch: true
+  fusion_mode: learnable
+  use_auxiliary_dense: true
+
+training:
+  epochs: 3
+  batch_size: 1
+  eval_interval: 1
+
+evaluation:
+  latency_warmup: 3
+  latency_iters: 10

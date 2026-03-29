@@ -1,0 +1,44 @@
+base_configs:
+  - ../default.yaml
+  - ../datasets/aitod.yaml
+
+project:
+  output_dir: outputs/aitod_cpu_demo
+
+runtime:
+  device: cpu
+  workers: 0
+  amp: false
+  print_freq: 5
+  pin_memory: false
+
+dataset:
+  train_scales: [384]
+  eval_scale: 384
+  max_size: 512
+  train_max_samples: 200
+  val_max_samples: 50
+
+model:
+  backbone:
+    name: resnet18
+    pretrained: false
+  hidden_dim: 128
+  num_queries: 100
+  query_select_topk: 100
+  nheads: 4
+  encoder_layers: 1
+  decoder_layers: 2
+  dim_feedforward: 512
+  use_detail_branch: true
+  fusion_mode: learnable
+  use_auxiliary_dense: true
+
+training:
+  epochs: 2
+  batch_size: 1
+  eval_interval: 1
+
+evaluation:
+  latency_warmup: 3
+  latency_iters: 10
