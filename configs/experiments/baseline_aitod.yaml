@@ -1,0 +1,11 @@
+base_configs:
+  - ../default.yaml
+  - ../datasets/aitod.yaml
+
+project:
+  output_dir: outputs/aitod_baseline
+
+model:
+  use_detail_branch: false
+  fusion_mode: none
+  use_auxiliary_dense: false

@@ -1,0 +1,82 @@
+base_configs: []
+
+project:
+  name: tiny-rtdetr-aerial
+  output_dir: outputs/aitod_full
+
+runtime:
+  device: cuda
+  workers: 4
+  amp: true
+  print_freq: 20
+  save_every: 1
+
+seed: 42
+
+dataset:
+  name: aitod
+  root: data/datasets/AI-TOD
+  train_images: train/images
+  val_images: val/images
+  train_annotations: annotations/train.json
+  val_annotations: annotations/val.json
+  image_mean: [0.485, 0.456, 0.406]
+  image_std: [0.229, 0.224, 0.225]
+  train_scales: [800, 960, 1024]
+  eval_scale: 1024
+  max_size: 1536
+  min_box_size: 2.0
+  use_crowd: false
+
+model:
+  name: tiny_rtdetr
+  backbone:
+    name: resnet50
+    pretrained: true
+    freeze_at: 0
+  hidden_dim: 256
+  num_queries: 300
+  query_select_topk: 300
+  nheads: 8
+  encoder_layers: 2
+  decoder_layers: 4
+  dim_feedforward: 1024
+  dropout: 0.1
+  use_detail_branch: true
+  fusion_mode: learnable
+  use_auxiliary_dense: true
+  fusion:
+    dynamic_gate: true
+
+training:
+  epochs: 24
+  batch_size: 2
+  lr: 2.0e-4
+  lr_backbone: 2.0e-5
+  weight_decay: 1.0e-4
+  warmup_epochs: 1
+  lr_min: 1.0e-6
+  clip_max_norm: 0.1
+  cls_loss_coef: 2.0
+  bbox_loss_coef: 5.0
+  giou_loss_coef: 2.0
+  eos_coef: 0.1
+  aux_loss_weight: 0.35
+  aux_heatmap_weight: 1.0
+  aux_box_weight: 1.0
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  eval_interval: 1
+  resume: ""
+
+evaluation:
+  conf_threshold: 0.05
+  max_detections: 300
+  latency_warmup: 20
+  latency_iters: 100
+
+logging:
+  use_tensorboard: false
+  history_file: history.jsonl
+  metrics_file: metrics.json
+  predictions_dir: predictions

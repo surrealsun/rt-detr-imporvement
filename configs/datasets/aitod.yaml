@@ -1,0 +1,7 @@
+dataset:
+  name: aitod
+  root: data/datasets/AI-TOD
+  train_images: train/images
+  val_images: val/images
+  train_annotations: annotations/train.json
+  val_annotations: annotations/val.json

@@ -1,0 +1,11 @@
+base_configs:
+  - ../default.yaml
+  - ../datasets/visdrone.yaml
+
+project:
+  output_dir: outputs/visdrone_full
+
+model:
+  use_detail_branch: true
+  fusion_mode: learnable
+  use_auxiliary_dense: true
